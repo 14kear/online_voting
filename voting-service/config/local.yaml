@@ -1,8 +1,13 @@
-env: "local"
-storage_path: "postgres://postgres:123456@localhost:5432/voting_db?sslmode=disable"
+server:
+  port: 8081
 
-grpc:
+auth_service:
   address: "localhost:50051"
 
-http:
-  port: 8081
+database:
+  host: "localhost"
+  port: 5050
+  user: "postgres"
+  password: "Qq1234567"
+  name: "votes_db"
+  ssl_mode: "disable"

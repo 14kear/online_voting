@@ -1,30 +1,57 @@
 package config
 
 import (
-	"github.com/ilyakaznacheev/cleanenv"
-	"log"
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"os"
 )
 
 type Config struct {
-	Env         string     `yaml:"env" env-default:"local"`
-	StoragePath string     `yaml:"storage_path" env-required:"true"`
-	GRPC        GRPCConfig `yaml:"grpc"`
-	HTTP        HTTPConfig `yaml:"http"`
+	AuthService AuthServiceConfig `yaml:"auth_service"`
+	Server      ServerConfig      `yaml:"server"`
+	Database    DatabaseConfig    `yaml:"database"`
 }
 
-type GRPCConfig struct {
+type AuthServiceConfig struct {
 	Address string `yaml:"address"`
 }
 
-type HTTPConfig struct {
+type ServerConfig struct {
 	Port int `yaml:"port"`
 }
 
-func Load(path string) *Config {
-	var config Config
-	err := cleanenv.ReadConfig(path, &config)
+type DatabaseConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Name     string `yaml:"name"`
+	SSLMode  string `yaml:"ssl_mode"`
+}
+
+func LoadConfig(path string) (*Config, error) {
+	config := &Config{}
+
+	file, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("cannot read config: %s", err)
+		return nil, fmt.Errorf("failed reading config file: %v", err)
 	}
-	return &config
+
+	err = yaml.Unmarshal(file, config)
+	if err != nil {
+		return nil, fmt.Errorf("failed unmarshal config: %v", err)
+	}
+
+	return config, nil
+}
+
+func (d *DatabaseConfig) GetConnectionString() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		d.User,
+		d.Password,
+		d.Host,
+		d.Port,
+		d.Name,
+		d.SSLMode,
+	)
 }

@@ -39,3 +39,17 @@ tasks:
       - "go test -coverpkg=./... -cover ./tests"
       - "go tool cover -html=coverage.out"
       - "mockgen -source=internal/services/forum/service.go -destination=internal/services/mocks/forum_mock.go package=mocks"
+
+  migrate votes up:
+    aliases:
+      - "vmu"
+    desc: "Rum up votes migrations"
+    cmds:
+      - "go run ./voting-service/cmd/migrator/main.go -action up"
+
+  migrate votes down:
+    aliases:
+      - "vmd"
+    desc: "Rum down votes migrations"
+    cmds:
+      - "go run ./voting-service/cmd/migrator/main.go -action down"

@@ -1,0 +1,32 @@
+# Binaries and build artifacts
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Environment/config files
+.env
+local.yaml
+*.local.yaml
+
+# Specific files to ignore
+config.go
+migrator.go
+Taskfile.yaml
+
+# IDE specific files
+.idea/
+.vscode/
+*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
