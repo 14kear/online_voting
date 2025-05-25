@@ -28,7 +28,7 @@ tasks:
       - "migrate"
     desc: "Migrations created successfully!"
     cmds:
-      - "go run forum-service/cmd/migrator/main.go --db-url=postgres://postgres:123456@localhost:5432/forum_db?sslmode=disable --migrations-path=forum-service/migrations"
+      - "go run voting-service/cmd/migrator/main.go --db-url=postgres://postgres:123456@localhost:5432/voting_db?sslmode=disable --migrations-path=voting-service/migrations"
 
   coverage:
     aliases:

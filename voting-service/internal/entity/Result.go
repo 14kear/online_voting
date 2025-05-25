@@ -3,9 +3,9 @@ package entity
 import "time"
 
 type Result struct {
-	ID       int
-	PollID   int
-	OptionID int
+	ID       int64
+	PollID   int64
+	OptionID int64
 	UserID   int64
 	VotedAt  time.Time
 }

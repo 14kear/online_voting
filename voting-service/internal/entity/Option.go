@@ -3,8 +3,8 @@ package entity
 import "time"
 
 type Option struct {
-	ID        int
-	PollID    int
+	ID        int64
+	PollID    int64
 	Text      string
 	CreatedAt time.Time
 }

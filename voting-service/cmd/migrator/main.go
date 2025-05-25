@@ -1,79 +1,69 @@
 package main
 
 import (
-	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
-	"github.com/14kear/onlineVotingBackend/voting-service/internal/config"
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+
+	// Подключаем PostgreSQL драйвер
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	// Подключаем файловый источник миграций
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"log"
 )
 
 func main() {
-	var (
-		action     string
-		steps      int
-		configPath string
-	)
+	var dbURL, migrationsPath, migrationsTable string
 
-	flag.StringVar(&action, "action", "up", "Миграция: up, down, force, version")
-	flag.IntVar(&steps, "steps", 0, "Количество шагов (для up/down)")
-	flag.StringVar(&configPath, "config", "voting-service/config/local.yaml",
-		"Путь к конфигурационному файлу")
+	flag.StringVar(&dbURL, "db-url", "", "PostgreSQL connection string")
+	flag.StringVar(&migrationsPath, "migrations-path", "", "Path to migrations")
+	flag.StringVar(&migrationsTable, "migrations-table", "schema_migrations", "Name of the migrations table (optional)")
 	flag.Parse()
 
-	cfg, err := config.LoadConfig(configPath)
-
-	db, err := sql.Open("postgres", cfg.Database.GetConnectionString())
-	if err != nil {
-		log.Fatal(err)
+	if dbURL == "" {
+		panic("db-url is required")
 	}
-	defer db.Close()
-
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		log.Fatal(err)
+	if migrationsPath == "" {
+		panic("migrations-path is required")
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://C:/Users/Egor/Desktop/online_voting/voting-service/migrations",
-		"postgres", driver,
+	// Добавляем параметр x-migrations-table, если задано
+	if migrationsTable != "" {
+		if dbURL[len(dbURL)-1] != '?' && dbURL[len(dbURL)-1] != '&' {
+			if !containsQueryParams(dbURL) {
+				dbURL += "?"
+			} else {
+				dbURL += "&"
+			}
+		}
+		dbURL += "x-migrations-table=" + migrationsTable
+	}
+
+	m, err := migrate.New(
+		"file://"+migrationsPath,
+		dbURL,
 	)
 	if err != nil {
-		log.Fatal(err)
+		panic(fmt.Errorf("failed to create migrate instance: %w", err))
 	}
 
-	switch action {
-	case "up":
-		if steps > 0 {
-			err = m.Steps(steps)
-		} else {
-			err = m.Up()
+	if err := m.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			fmt.Println("Nothing to migrate")
+			return
 		}
-	case "down":
-		if steps > 0 {
-			err = m.Steps(-steps)
-		} else {
-			err = m.Down()
-		}
-	case "force":
-		err = m.Force(steps)
-	case "version":
-		version, dirty, err := m.Version()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Version: %d, Dirty: %v\n\n", version, dirty)
-		return
-	default:
-		log.Fatalf("Неизвестное действие: %s", action)
+		panic(fmt.Errorf("migration failed: %w", err))
 	}
 
-	if err != nil && err != migrate.ErrNoChange {
-		log.Fatal(err)
-	}
+	fmt.Println("Migrations applied successfully")
+}
 
-	fmt.Println("Миграция успешно выполнена")
+// containsQueryParams checks if URL already has '?'
+func containsQueryParams(s string) bool {
+	for _, c := range s {
+		if c == '?' {
+			return true
+		}
+	}
+	return false
 }
