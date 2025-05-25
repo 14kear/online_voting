@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"github.com/14kear/online_voting/auth-service/internal/domain/models"
 	"github.com/14kear/online_voting/auth-service/internal/services/auth"
 	ssov1 "github.com/14kear/online_voting/protos/gen/go/auth"
 	"google.golang.org/grpc"
@@ -30,6 +31,9 @@ type Auth interface {
 	) (newAccessToken string, newRefreshToken string, err error)
 	Logout(ctx context.Context, refreshToken string, appID int) (err error)
 	ValidateToken(ctx context.Context, accessToken string, appID int) (int64, string, error)
+	IsBlocked(ctx context.Context, userID int64) (bool, error)
+	SetUserBlockStatus(ctx context.Context, userID int64, block bool, accessToken string, appID int) error
+	GetUsers(ctx context.Context, accessToken string, appID int) ([]models.User, error)
 }
 
 type serverAPI struct {
@@ -121,6 +125,57 @@ func (s *serverAPI) ValidateToken(ctx context.Context, req *ssov1.ValidateTokenR
 	return &ssov1.ValidateTokenResponse{UserId: userID, Email: email}, nil
 }
 
+func (s *serverAPI) IsBlocked(ctx context.Context, req *ssov1.IsBlockedRequest) (*ssov1.IsBlockedResponse, error) {
+	if err := validateIsBlocked(req); err != nil {
+		return nil, err
+	}
+
+	isBlocked, err := s.auth.IsBlocked(ctx, req.GetUserId())
+	if err != nil {
+		if errors.Is(err, auth.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+	return &ssov1.IsBlockedResponse{IsBlocked: isBlocked}, nil
+}
+
+func (s *serverAPI) SetUserBlockStatus(ctx context.Context, req *ssov1.SetUserBlockStatusRequest) (*ssov1.SetUserBlockStatusResponse, error) {
+	err := s.auth.SetUserBlockStatus(ctx, req.GetUserId(), req.GetBlock(), req.GetAccessToken(), int(req.GetAppId()))
+	if err != nil {
+		return &ssov1.SetUserBlockStatusResponse{
+			Success: false,
+			Message: "failed to update block status",
+		}, err
+	}
+
+	return &ssov1.SetUserBlockStatusResponse{
+		Success: true,
+		Message: "status updated",
+	}, nil
+}
+
+func (s *serverAPI) GetUsers(ctx context.Context, req *ssov1.GetUsersRequest) (*ssov1.GetUsersResponse, error) {
+	users, err := s.auth.GetUsers(ctx, req.GetAccessToken(), int(req.GetAppId()))
+	if err != nil {
+		if errors.Is(err, auth.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	var protoUsers []*ssov1.User
+	for _, u := range users {
+		protoUsers = append(protoUsers, &ssov1.User{
+			Id:        u.ID,
+			Email:     u.Email,
+			IsBlocked: u.IsBlocked,
+		})
+	}
+
+	return &ssov1.GetUsersResponse{Users: protoUsers}, nil
+}
+
 func validateLogin(req *ssov1.LoginRequest) error {
 	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
@@ -151,5 +206,12 @@ func validateIsAdmin(req *ssov1.IsAdminRequest) error {
 		return status.Error(codes.InvalidArgument, "user_id is required")
 	}
 
+	return nil
+}
+
+func validateIsBlocked(req *ssov1.IsBlockedRequest) error {
+	if req.GetUserId() == emptyValue {
+		return status.Error(codes.InvalidArgument, "user_id is required")
+	}
 	return nil
 }

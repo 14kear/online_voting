@@ -57,7 +57,7 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (
 func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	const op = "storage.postgres.User"
 
-	stmt, err := s.db.Prepare("SELECT id, email, pass_hash FROM users WHERE email = $1")
+	stmt, err := s.db.Prepare("SELECT id, email, pass_hash, is_blocked FROM users WHERE email = $1")
 	if err != nil {
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
@@ -66,7 +66,7 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	row := stmt.QueryRowContext(ctx, email)
 
 	var user models.User
-	err = row.Scan(&user.ID, &user.Email, &user.PassHash)
+	err = row.Scan(&user.ID, &user.Email, &user.PassHash, &user.IsBlocked)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.User{}, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
@@ -196,4 +196,53 @@ func (s *Storage) DeleteRefreshToken(ctx context.Context, userID int64, appID in
 	}
 
 	return nil
+}
+
+func (s *Storage) SetUserBlockStatus(ctx context.Context, userID int64, block bool) error {
+	const op = "storage.postgres.SetUserBlockStatus"
+
+	_, err := s.db.ExecContext(ctx, "UPDATE users SET is_blocked = $1 WHERE id = $2", block, userID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
+
+func (s *Storage) IsBlocked(ctx context.Context, userID int64) (bool, error) {
+	query := `SELECT is_blocked FROM users WHERE id = $1`
+	var isBlocked bool
+	err := s.db.QueryRowContext(ctx, query, userID).Scan(&isBlocked)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("IsBlocked: user not found")
+		}
+		return false, fmt.Errorf("IsBlocked: %w", err)
+	}
+	return isBlocked, nil
+}
+
+func (s *Storage) GetUsers(ctx context.Context) ([]models.User, error) {
+	const op = "storage.postgres.GetUsers"
+
+	rows, err := s.db.QueryContext(ctx, "SELECT id, email, is_blocked FROM users")
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Email, &user.IsBlocked)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return users, nil
 }

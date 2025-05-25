@@ -65,22 +65,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	mainMux := http.NewServeMux()
-
-	// grpc-gateway API
-	mainMux.Handle("/", mux)
-
-	// Swagger UI - отдаём статику из swagger/dist по пути /swagger-ui/
-	fsSwaggerUI := http.FileServer(http.Dir("auth-service/swagger/dist"))
-	mainMux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui/", fsSwaggerUI))
-
-	// Отдаём JSON спецификацию по точному пути
-	mainMux.HandleFunc("/swagger/apidocs.swagger.json", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "auth-service/swagger/apidocs.swagger.json")
-	})
-
 	// HTTP сервер с поддержкой CORS
-	handler := c.Handler(mainMux)
+	handler := c.Handler(mux)
 
 	gatewayServer := &http.Server{
 		Addr:    ":" + strconv.Itoa(cfg.HTTP.Port),

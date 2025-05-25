@@ -32,8 +32,6 @@ type TokenOperation struct {
 	token  string
 }
 
-// TODO: структура для updateToken(userid, appid, token)
-
 type TokenStorage interface {
 	SaveToken(ctx context.Context, userID int64, appID int, token string, expiresAt time.Time) (int64, error)
 	IsRefreshTokenValid(ctx context.Context, userID int64, appID int, token string) (bool, error)
@@ -47,6 +45,9 @@ type UserSaver interface {
 type UserProvider interface {
 	User(ctx context.Context, email string) (user models.User, err error)
 	IsAdmin(ctx context.Context, userID int64) (bool, error)
+	SetUserBlockStatus(ctx context.Context, userID int64, block bool) error
+	IsBlocked(ctx context.Context, userID int64) (bool, error)
+	GetUsers(ctx context.Context) ([]models.User, error)
 }
 
 type AppProvider interface {
@@ -57,7 +58,6 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserExists         = errors.New("user already exists")
 	ErrUserNotFound       = errors.New("user not found")
-	ErrAppNotFound        = errors.New("app not found")
 )
 
 // NewAuth return a new instance of the Auth service
@@ -101,6 +101,10 @@ func (auth *Auth) Login(ctx context.Context, email, password string, appID int) 
 
 		auth.log.Warn("failed to get user", sl.Err(err))
 		return "", "", 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	if user.IsBlocked {
+		return "", "", 0, fmt.Errorf("user is blocked")
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
@@ -323,7 +327,7 @@ func (auth *Auth) Logout(ctx context.Context, refreshToken string, appID int) er
 func (auth *Auth) ValidateToken(ctx context.Context, accessToken string, appID int) (int64, string, error) {
 	const op = "auth.ValidateToken"
 	log := auth.log.With(slog.String("op", op))
-	log.Info("validating token")
+	log.Info("validating token", slog.Int("appID", appID))
 
 	app, err := auth.appProvider.App(ctx, appID)
 	if err != nil {
@@ -370,4 +374,82 @@ func (auth *Auth) ValidateToken(ctx context.Context, accessToken string, appID i
 
 	log.Info("token validated successfully")
 	return uid, email, nil
+}
+
+func (auth *Auth) SetUserBlockStatus(ctx context.Context, userID int64, block bool, accessToken string, appID int) error {
+	const op = "auth.BlockUser"
+
+	log := auth.log.With(slog.String("op", op))
+	log.Info("blocking user")
+
+	validatedID, _, err := auth.ValidateToken(ctx, accessToken, appID)
+	if err != nil {
+		return fmt.Errorf("%s: token invalid: %w", op, err)
+	}
+
+	isAdmin, err := auth.IsAdmin(ctx, validatedID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if !isAdmin {
+		return fmt.Errorf("user %d is not an admin", validatedID)
+	}
+
+	err = auth.userProvider.SetUserBlockStatus(ctx, userID, block)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("blocked user")
+
+	return nil
+}
+
+func (auth *Auth) IsBlocked(ctx context.Context, userID int64) (bool, error) {
+	const op = "auth.isBlocked"
+
+	log := auth.log.With(slog.String("op", op))
+	log.Info("checking blocked user")
+
+	isBlocked, err := auth.userProvider.IsBlocked(ctx, userID)
+	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			log.Warn("user not found", sl.Err(err))
+			return false, fmt.Errorf("%s: %w", op, ErrUserNotFound)
+		}
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	log.Info("checking successfully", slog.Bool("isBlocked", isBlocked))
+	return isBlocked, nil
+}
+
+func (auth *Auth) GetUsers(ctx context.Context, accessToken string, appID int) ([]models.User, error) {
+	const op = "auth.GetUsers"
+
+	log := auth.log.With(slog.String("op", op))
+	log.Info("load users")
+
+	validatedID, _, err := auth.ValidateToken(ctx, accessToken, appID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	isAdmin, err := auth.IsAdmin(ctx, validatedID)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	if !isAdmin {
+		return nil, fmt.Errorf("user %d is not an admin", validatedID)
+	}
+
+	users, err := auth.userProvider.GetUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("loaded users")
+
+	return users, nil
 }
