@@ -1,0 +1,365 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "auth/auth.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "Auth"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/auth/admin/{user_id}": {
+      "get": {
+        "summary": "Проверка, является ли пользователь администратором.",
+        "operationId": "Auth_IsAdmin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authIsAdminResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "user_id",
+            "description": "Идентификатор пользователя.",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Вход пользователя с выдачей JWT токенов.",
+        "operationId": "Auth_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authLoginResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Запрос для входа пользователя.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Выход пользователя — инвалидирует refresh токен.",
+        "operationId": "Auth_Logout",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authLogoutResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Запрос на выход пользователя (инвалидация refresh токена).",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authLogoutRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Обновление JWT токенов по refresh токену.",
+        "operationId": "Auth_RefreshTokens",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authRefreshTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Запрос на обновление access токена с использованием refresh токена.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authRefreshTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Регистрация нового пользователя.",
+        "operationId": "Auth_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/authRegisterResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Запрос для регистрации нового пользователя.",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authRegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Auth"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "authIsAdminResponse": {
+      "type": "object",
+      "properties": {
+        "is_admin": {
+          "type": "boolean",
+          "description": "Флаг, указывающий, является ли пользователь администратором."
+        }
+      },
+      "description": "Ответ с результатом проверки."
+    },
+    "authLoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Email пользователя."
+        },
+        "password": {
+          "type": "string",
+          "description": "Пароль пользователя."
+        },
+        "app_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Идентификатор приложения, для которого производится вход."
+        }
+      },
+      "description": "Запрос для входа пользователя."
+    },
+    "authLoginResponse": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string",
+          "description": "Access JWT токен для авторизации."
+        },
+        "refresh_token": {
+          "type": "string",
+          "description": "Refresh JWT токен для обновления access токена."
+        },
+        "user_id": {
+          "type": "string",
+          "format": "int64",
+          "description": "Идентификатор пользователя."
+        }
+      },
+      "description": "Ответ с токенами после успешного входа."
+    },
+    "authLogoutRequest": {
+      "type": "object",
+      "properties": {
+        "refresh_token": {
+          "type": "string",
+          "description": "Refresh токен, который нужно инвалидировать."
+        },
+        "app_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Идентификатор приложения."
+        }
+      },
+      "description": "Запрос на выход пользователя (инвалидация refresh токена)."
+    },
+    "authLogoutResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Сообщение статуса."
+        }
+      },
+      "description": "Ответ с сообщением об успешном выходе."
+    },
+    "authRefreshTokenRequest": {
+      "type": "object",
+      "properties": {
+        "refresh_token": {
+          "type": "string",
+          "description": "Refresh токен."
+        },
+        "app_id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Идентификатор приложения."
+        }
+      },
+      "description": "Запрос на обновление access токена с использованием refresh токена."
+    },
+    "authRefreshTokenResponse": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string",
+          "description": "Новый access токен."
+        },
+        "refresh_token": {
+          "type": "string",
+          "description": "Новый refresh токен."
+        }
+      },
+      "description": "Ответ с обновленными токенами."
+    },
+    "authRegisterRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Email пользователя."
+        },
+        "password": {
+          "type": "string",
+          "description": "Пароль пользователя."
+        }
+      },
+      "description": "Запрос для регистрации нового пользователя."
+    },
+    "authRegisterResponse": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "format": "int64",
+          "description": "Уникальный идентификатор пользователя."
+        }
+      },
+      "description": "Ответ при успешной регистрации."
+    },
+    "authValidateTokenResponse": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "format": "int64",
+          "description": "Идентификатор пользователя, если токен валиден."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email пользователя."
+        },
+        "is_valid": {
+          "type": "boolean",
+          "description": "Флаг валидности токена."
+        }
+      },
+      "description": "Ответ с результатами валидации токена."
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

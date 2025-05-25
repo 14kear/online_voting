@@ -1,0 +1,12 @@
+env: "local"
+storage_path: "postgres://postgres:123456@localhost:5432/voting_auth?sslmode=disable"
+
+access_ttl: 15m
+refresh_ttl: 168h  # 7 дней
+
+grpc:
+  port: 50051
+  timeout: 10h
+
+http:
+  port: 8080
