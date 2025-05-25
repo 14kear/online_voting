@@ -1,9 +1,9 @@
 package app
 
 import (
-	grpcapp "github.com/14kear/onlineVotingBackend/auth-service/internal/app/grpc"
-	"github.com/14kear/onlineVotingBackend/auth-service/internal/services/auth"
-	"github.com/14kear/onlineVotingBackend/auth-service/internal/storage/postgres"
+	grpcapp "github.com/14kear/online_voting/auth-service/internal/app/grpc"
+	"github.com/14kear/online_voting/auth-service/internal/services/auth"
+	"github.com/14kear/online_voting/auth-service/internal/storage/postgres"
 	"log/slog"
 	"time"
 )

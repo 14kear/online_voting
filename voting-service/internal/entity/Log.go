@@ -6,7 +6,8 @@ type Log struct {
 	ID        int64
 	UserID    int64
 	Action    string
-	PollID    int64
-	OptionID  int64
+	PollID    *int64
+	OptionID  *int64
+	ResultID  *int64
 	CreatedAt time.Time
 }

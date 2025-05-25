@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/14kear/onlineVotingBackend/voting-service/internal/entity"
-	"github.com/14kear/onlineVotingBackend/voting-service/internal/repo"
+	"github.com/14kear/online_voting/voting-service/internal/entity"
+	"github.com/14kear/online_voting/voting-service/internal/repo"
 	_ "github.com/lib/pq"
 )
 
@@ -29,7 +29,7 @@ func New(postgresURL string) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-func (s *Storage) SavePoll(ctx context.Context, title, description string, creatorID int64, status string) (int64, error) {
+func (s *Storage) SavePoll(ctx context.Context, title, description string, creatorID int64, status entity.PollStatus) (int64, error) {
 	const op = "storage.postgres.NewPoll"
 
 	query := `INSERT INTO polls (title, description, creator_id, status) VALUES ($1, $2, $3, $4) RETURNING id`
@@ -87,7 +87,7 @@ func (s *Storage) GetPolls(ctx context.Context) ([]entity.Poll, error) {
 	return polls, nil
 }
 
-func (s *Storage) UpdatePoll(ctx context.Context, id int64, title, description, status string) error {
+func (s *Storage) UpdatePoll(ctx context.Context, id int64, title, description string, status entity.PollStatus) error {
 	const op = "storage.postgres.UpdatePoll"
 
 	const query = `UPDATE polls SET title = $1, description = $2, status = $3, updated_at  = NOW() WHERE  id = $4`
@@ -127,7 +127,7 @@ func (s *Storage) SaveOption(ctx context.Context, pollID int64, text string) (in
 	var id int64
 	err := s.db.QueryRowContext(ctx, query, pollID, text).Scan(&id)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, err)
+		return 0, fmt.Errorf("%s: %w", op, repo.ErrOptionNotFound)
 	}
 
 	return id, nil
@@ -160,12 +160,12 @@ func (s *Storage) GetOptionsByPollID(ctx context.Context, pollID int64) ([]entit
 	return options, nil
 }
 
-func (s *Storage) UpdateOption(ctx context.Context, id int64, text string) error {
+func (s *Storage) UpdateOption(ctx context.Context, id, pollID int64, text string) error {
 	const op = "storage.postgres.UpdateOption"
 
-	const query = `UPDATE options SET text = $1 WHERE id = $2`
+	const query = `UPDATE options SET text = $1 WHERE id = $2 AND poll_id = $3`
 
-	res, err := s.db.ExecContext(ctx, query, text, id)
+	res, err := s.db.ExecContext(ctx, query, text, id, pollID)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -176,12 +176,12 @@ func (s *Storage) UpdateOption(ctx context.Context, id int64, text string) error
 
 }
 
-func (s *Storage) DeleteOption(ctx context.Context, id int64) error {
+func (s *Storage) DeleteOption(ctx context.Context, id int64, pollID int64) error {
 	const op = "storage.postgres.DeleteOption"
 
-	query := `DELETE FROM options WHERE id = $1`
+	query := `DELETE FROM options WHERE id = $1 AND poll_id = $2`
 
-	res, err := s.db.ExecContext(ctx, query, id)
+	res, err := s.db.ExecContext(ctx, query, id, pollID)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -298,12 +298,39 @@ func (s *Storage) DeleteResult(ctx context.Context, id int64) error {
 func (s *Storage) SaveLog(ctx context.Context, log *entity.Log) (int64, error) {
 	const op = "storage.postgres.SaveLog"
 
-	query := `INSERT INTO logs (user_id, action, poll_id, option_id) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO logs (user_id, action, poll_id, option_id, result_id) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	err := s.db.QueryRowContext(ctx, query, log.UserID, log.Action, log.PollID, log.OptionID).Scan(&log.ID)
+	err := s.db.QueryRowContext(ctx, query, log.UserID, log.Action, log.PollID, log.OptionID, log.ResultID).Scan(&log.ID)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return log.ID, nil
+}
+
+func (s *Storage) GetLogs(ctx context.Context) ([]entity.Log, error) {
+	const op = "storage.postgres.GetLogs"
+
+	query := `SELECT id, user_id, action, poll_id, option_id, result_id, created_at FROM logs ORDER BY created_at DESC`
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var logs []entity.Log
+	for rows.Next() {
+		var log entity.Log
+		if err := rows.Scan(&log.ID, &log.UserID, &log.Action, &log.PollID, &log.OptionID, &log.ResultID, &log.CreatedAt); err != nil {
+			return nil, fmt.Errorf("%s: scan: %w", op, err)
+		}
+		logs = append(logs, log)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s: rows error: %w", op, err)
+	}
+
+	return logs, nil
 }

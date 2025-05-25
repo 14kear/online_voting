@@ -1,7 +1,7 @@
 package jwt
 
 import (
-	"github.com/14kear/onlineVotingBackend/auth-service/internal/domain/models"
+	"github.com/14kear/online_voting/auth-service/internal/domain/models"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
 )

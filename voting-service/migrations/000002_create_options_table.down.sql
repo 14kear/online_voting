@@ -1,1 +1,1 @@
-DROP TABLE options;
+DROP TABLE IF EXISTS options;

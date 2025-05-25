@@ -1,4 +1,4 @@
-module github.com/14kear/onlineVotingBackend/auth-service
+module github.com/14kear/online_voting/auth-service
 
 go 1.23.6
 

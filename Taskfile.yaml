@@ -8,14 +8,6 @@ tasks:
     cmds:
       - "protoc -I protos/proto -I protos/googleapis --go_out=protos/gen/go --go_opt=paths=source_relative   --go-grpc_out=protos/gen/go --go-grpc_opt=paths=source_relative   --grpc-gateway_out=protos/gen/go --grpc-gateway_opt=paths=source_relative   protos/proto/auth/auth.proto"
 
-  swagger-grpc:
-    aliases:
-      - "swaggerGRPC"
-    desc: "Generate swagger json from proto files"
-    cmds:
-      - "protoc   -I protos/proto   -I protos/googleapis   --go_out=protos/gen/go --go_opt=paths=source_relative   --go-grpc_out=protos/gen/go --go-grpc_opt=paths=source_relative   --grpc
-      -gateway_out=protos/gen/go --grpc-gateway_opt=paths=source_relative   --openapiv2_out=auth-service/swagger   --openapiv2_opt=logtostderr=true,allow_merge=true,json_names_for_fields=false   protos/proto/auth/auth.proto"
-
   run_auth:
     aliases:
       - "auth"
@@ -30,16 +22,6 @@ tasks:
     cmds:
       - "go run voting-service/cmd/migrator/main.go --db-url=postgres://postgres:123456@localhost:5432/voting_db?sslmode=disable --migrations-path=voting-service/migrations"
 
-  coverage:
-    aliases:
-      - "cover"
-    desc: "Checking test cover"
-    cmds:
-      - "go test -cover ./internal/services/auth"
-      - "go test -coverpkg=./... -cover ./tests"
-      - "go tool cover -html=coverage.out"
-      - "mockgen -source=internal/services/forum/service.go -destination=internal/services/mocks/forum_mock.go package=mocks"
-
   migrate votes up:
     aliases:
       - "vmu"
@@ -53,3 +35,10 @@ tasks:
     desc: "Rum down votes migrations"
     cmds:
       - "go run ./voting-service/cmd/migrator/main.go -action down"
+
+  run voting service:
+    aliases:
+      - "vote"
+    desc: "Run voting-service"
+    cmds:
+      - "go run voting-service/cmd/run/main.go"

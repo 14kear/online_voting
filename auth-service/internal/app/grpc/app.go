@@ -2,7 +2,7 @@ package grpcapp
 
 import (
 	"fmt"
-	authgrpc "github.com/14kear/onlineVotingBackend/auth-service/internal/grpc/auth"
+	authgrpc "github.com/14kear/online_voting/auth-service/internal/grpc/auth"
 	"google.golang.org/grpc"
 	"log/slog"
 	"net"

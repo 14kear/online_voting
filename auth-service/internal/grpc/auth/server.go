@@ -3,8 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
-	ssov1 "github.com/14kear/forum-project/protos/gen/go/auth"
-	"github.com/14kear/onlineVotingBackend/auth-service/internal/services/auth"
+	"github.com/14kear/online_voting/auth-service/internal/services/auth"
+	ssov1 "github.com/14kear/online_voting/protos/gen/go/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
