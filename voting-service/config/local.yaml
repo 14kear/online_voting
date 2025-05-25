@@ -1,0 +1,8 @@
+env: "local"
+storage_path: "postgres://postgres:123456@localhost:5432/voting_db?sslmode=disable"
+
+grpc:
+  address: "localhost:50051"
+
+http:
+  port: 8081
