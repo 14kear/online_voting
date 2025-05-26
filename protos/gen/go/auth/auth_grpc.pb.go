@@ -19,12 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_Register_FullMethodName      = "/auth.Auth/Register"
-	Auth_Login_FullMethodName         = "/auth.Auth/Login"
-	Auth_IsAdmin_FullMethodName       = "/auth.Auth/IsAdmin"
-	Auth_RefreshTokens_FullMethodName = "/auth.Auth/RefreshTokens"
-	Auth_Logout_FullMethodName        = "/auth.Auth/Logout"
-	Auth_ValidateToken_FullMethodName = "/auth.Auth/ValidateToken"
+	Auth_Register_FullMethodName           = "/auth.Auth/Register"
+	Auth_Login_FullMethodName              = "/auth.Auth/Login"
+	Auth_IsAdmin_FullMethodName            = "/auth.Auth/IsAdmin"
+	Auth_RefreshTokens_FullMethodName      = "/auth.Auth/RefreshTokens"
+	Auth_Logout_FullMethodName             = "/auth.Auth/Logout"
+	Auth_SetUserBlockStatus_FullMethodName = "/auth.Auth/SetUserBlockStatus"
+	Auth_GetUsers_FullMethodName           = "/auth.Auth/GetUsers"
+	Auth_IsBlocked_FullMethodName          = "/auth.Auth/IsBlocked"
+	Auth_ValidateToken_FullMethodName      = "/auth.Auth/ValidateToken"
 )
 
 // AuthClient is the client API for Auth service.
@@ -43,6 +46,10 @@ type AuthClient interface {
 	RefreshTokens(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
 	// Выход пользователя — инвалидирует refresh токен.
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
+	// блок-разблок
+	SetUserBlockStatus(ctx context.Context, in *SetUserBlockStatusRequest, opts ...grpc.CallOption) (*SetUserBlockStatusResponse, error)
+	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
+	IsBlocked(ctx context.Context, in *IsBlockedRequest, opts ...grpc.CallOption) (*IsBlockedResponse, error)
 	// Валидация access токена (например, проверка срока действия).
 	ValidateToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error)
 }
@@ -105,6 +112,36 @@ func (c *authClient) Logout(ctx context.Context, in *LogoutRequest, opts ...grpc
 	return out, nil
 }
 
+func (c *authClient) SetUserBlockStatus(ctx context.Context, in *SetUserBlockStatusRequest, opts ...grpc.CallOption) (*SetUserBlockStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetUserBlockStatusResponse)
+	err := c.cc.Invoke(ctx, Auth_SetUserBlockStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUsersResponse)
+	err := c.cc.Invoke(ctx, Auth_GetUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) IsBlocked(ctx context.Context, in *IsBlockedRequest, opts ...grpc.CallOption) (*IsBlockedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IsBlockedResponse)
+	err := c.cc.Invoke(ctx, Auth_IsBlocked_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authClient) ValidateToken(ctx context.Context, in *ValidateTokenRequest, opts ...grpc.CallOption) (*ValidateTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ValidateTokenResponse)
@@ -131,6 +168,10 @@ type AuthServer interface {
 	RefreshTokens(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
 	// Выход пользователя — инвалидирует refresh токен.
 	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
+	// блок-разблок
+	SetUserBlockStatus(context.Context, *SetUserBlockStatusRequest) (*SetUserBlockStatusResponse, error)
+	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
+	IsBlocked(context.Context, *IsBlockedRequest) (*IsBlockedResponse, error)
 	// Валидация access токена (например, проверка срока действия).
 	ValidateToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error)
 	mustEmbedUnimplementedAuthServer()
@@ -157,6 +198,15 @@ func (UnimplementedAuthServer) RefreshTokens(context.Context, *RefreshTokenReque
 }
 func (UnimplementedAuthServer) Logout(context.Context, *LogoutRequest) (*LogoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
+}
+func (UnimplementedAuthServer) SetUserBlockStatus(context.Context, *SetUserBlockStatusRequest) (*SetUserBlockStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetUserBlockStatus not implemented")
+}
+func (UnimplementedAuthServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedAuthServer) IsBlocked(context.Context, *IsBlockedRequest) (*IsBlockedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsBlocked not implemented")
 }
 func (UnimplementedAuthServer) ValidateToken(context.Context, *ValidateTokenRequest) (*ValidateTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateToken not implemented")
@@ -272,6 +322,60 @@ func _Auth_Logout_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_SetUserBlockStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetUserBlockStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).SetUserBlockStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_SetUserBlockStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).SetUserBlockStatus(ctx, req.(*SetUserBlockStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_GetUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).GetUsers(ctx, req.(*GetUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_IsBlocked_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IsBlockedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).IsBlocked(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_IsBlocked_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).IsBlocked(ctx, req.(*IsBlockedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Auth_ValidateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ValidateTokenRequest)
 	if err := dec(in); err != nil {
@@ -316,6 +420,18 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Logout",
 			Handler:    _Auth_Logout_Handler,
+		},
+		{
+			MethodName: "SetUserBlockStatus",
+			Handler:    _Auth_SetUserBlockStatus_Handler,
+		},
+		{
+			MethodName: "GetUsers",
+			Handler:    _Auth_GetUsers_Handler,
+		},
+		{
+			MethodName: "IsBlocked",
+			Handler:    _Auth_IsBlocked_Handler,
 		},
 		{
 			MethodName: "ValidateToken",

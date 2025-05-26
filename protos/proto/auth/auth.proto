@@ -47,6 +47,27 @@ service Auth {
     };
   }
 
+  // блок-разблок
+  rpc SetUserBlockStatus (SetUserBlockStatusRequest) returns (SetUserBlockStatusResponse) {
+    option (google.api.http) = {
+      post: "/auth/block-status"
+      body: "*"
+    };
+  }
+
+  rpc GetUsers (GetUsersRequest) returns (GetUsersResponse) {
+    option (google.api.http) = {
+      post: "/auth/users"
+      body: "*"
+    };
+  }
+
+  rpc IsBlocked (IsBlockedRequest) returns (IsBlockedResponse) {
+    option (google.api.http) = {
+      get: "/auth/block-status/{user_id}"
+    };
+  }
+
   // Валидация access токена (например, проверка срока действия).
   rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
 }
@@ -155,3 +176,39 @@ message ValidateTokenResponse {
   // Флаг валидности токена.
   bool is_valid = 3;
 }
+
+message SetUserBlockStatusRequest {
+  int64 user_id = 1;
+  bool block = 2; // true = заблокировать, false = разблокировать
+  string access_token = 3;
+  int32 app_id = 4;
+}
+
+message SetUserBlockStatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetUsersRequest {
+  string access_token = 1;
+  int32 app_id = 2;
+}
+
+message GetUsersResponse {
+  repeated User users = 1;
+}
+
+message User {
+  int64 id = 1;
+  string email = 2;
+  bool is_blocked = 3;
+}
+
+message IsBlockedRequest{
+  int64 user_id = 1;
+}
+
+message IsBlockedResponse{
+  bool is_blocked = 1;
+}
+
