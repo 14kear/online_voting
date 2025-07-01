@@ -55,6 +55,13 @@ service Auth {
     };
   }
 
+  rpc SetUserAdminStatus (SetAdminStatusRequest) returns (SetAdminStatusResponse) {
+    option (google.api.http) = {
+      post: "/auth/admin-status"
+      body: "*"
+    };
+  }
+
   rpc GetUsers (GetUsersRequest) returns (GetUsersResponse) {
     option (google.api.http) = {
       post: "/auth/users"
@@ -202,6 +209,7 @@ message User {
   int64 id = 1;
   string email = 2;
   bool is_blocked = 3;
+  bool is_admin = 4;
 }
 
 message IsBlockedRequest{
@@ -210,5 +218,17 @@ message IsBlockedRequest{
 
 message IsBlockedResponse{
   bool is_blocked = 1;
+}
+
+message SetAdminStatusRequest{
+  int64 user_id = 1;
+  bool admin = 2; // true = админ, false = не админ
+  string access_token = 3;
+  int32 app_id = 4;
+}
+
+message SetAdminStatusResponse{
+  bool success = 1;
+  string message = 2;
 }
 

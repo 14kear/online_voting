@@ -25,6 +25,7 @@ const (
 	Auth_RefreshTokens_FullMethodName      = "/auth.Auth/RefreshTokens"
 	Auth_Logout_FullMethodName             = "/auth.Auth/Logout"
 	Auth_SetUserBlockStatus_FullMethodName = "/auth.Auth/SetUserBlockStatus"
+	Auth_SetUserAdminStatus_FullMethodName = "/auth.Auth/SetUserAdminStatus"
 	Auth_GetUsers_FullMethodName           = "/auth.Auth/GetUsers"
 	Auth_IsBlocked_FullMethodName          = "/auth.Auth/IsBlocked"
 	Auth_ValidateToken_FullMethodName      = "/auth.Auth/ValidateToken"
@@ -48,6 +49,7 @@ type AuthClient interface {
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
 	// блок-разблок
 	SetUserBlockStatus(ctx context.Context, in *SetUserBlockStatusRequest, opts ...grpc.CallOption) (*SetUserBlockStatusResponse, error)
+	SetUserAdminStatus(ctx context.Context, in *SetAdminStatusRequest, opts ...grpc.CallOption) (*SetAdminStatusResponse, error)
 	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
 	IsBlocked(ctx context.Context, in *IsBlockedRequest, opts ...grpc.CallOption) (*IsBlockedResponse, error)
 	// Валидация access токена (например, проверка срока действия).
@@ -122,6 +124,16 @@ func (c *authClient) SetUserBlockStatus(ctx context.Context, in *SetUserBlockSta
 	return out, nil
 }
 
+func (c *authClient) SetUserAdminStatus(ctx context.Context, in *SetAdminStatusRequest, opts ...grpc.CallOption) (*SetAdminStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetAdminStatusResponse)
+	err := c.cc.Invoke(ctx, Auth_SetUserAdminStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authClient) GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetUsersResponse)
@@ -170,6 +182,7 @@ type AuthServer interface {
 	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
 	// блок-разблок
 	SetUserBlockStatus(context.Context, *SetUserBlockStatusRequest) (*SetUserBlockStatusResponse, error)
+	SetUserAdminStatus(context.Context, *SetAdminStatusRequest) (*SetAdminStatusResponse, error)
 	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
 	IsBlocked(context.Context, *IsBlockedRequest) (*IsBlockedResponse, error)
 	// Валидация access токена (например, проверка срока действия).
@@ -201,6 +214,9 @@ func (UnimplementedAuthServer) Logout(context.Context, *LogoutRequest) (*LogoutR
 }
 func (UnimplementedAuthServer) SetUserBlockStatus(context.Context, *SetUserBlockStatusRequest) (*SetUserBlockStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetUserBlockStatus not implemented")
+}
+func (UnimplementedAuthServer) SetUserAdminStatus(context.Context, *SetAdminStatusRequest) (*SetAdminStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetUserAdminStatus not implemented")
 }
 func (UnimplementedAuthServer) GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
@@ -340,6 +356,24 @@ func _Auth_SetUserBlockStatus_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_SetUserAdminStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetAdminStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).SetUserAdminStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_SetUserAdminStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).SetUserAdminStatus(ctx, req.(*SetAdminStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Auth_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUsersRequest)
 	if err := dec(in); err != nil {
@@ -424,6 +458,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetUserBlockStatus",
 			Handler:    _Auth_SetUserBlockStatus_Handler,
+		},
+		{
+			MethodName: "SetUserAdminStatus",
+			Handler:    _Auth_SetUserAdminStatus_Handler,
 		},
 		{
 			MethodName: "GetUsers",

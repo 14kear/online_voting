@@ -5,4 +5,5 @@ type User struct {
 	Email     string
 	PassHash  []byte
 	IsBlocked bool
+	IsAdmin   bool
 }

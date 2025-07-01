@@ -26,8 +26,8 @@ func NewApp(
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:4200"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Refresh-Token"},
 		ExposeHeaders:    []string{"X-New-Access-Token", "X-New-Refresh-Token"},
 		AllowCredentials: true,

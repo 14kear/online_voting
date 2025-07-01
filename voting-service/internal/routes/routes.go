@@ -24,6 +24,7 @@ func RegisterPrivateRoutes(rg *gin.RouterGroup, handler *handlers.VotingHandler)
 	{
 		rg.POST("/polls", handler.CreatePoll)
 		rg.DELETE("/polls/:id", handler.DeletePoll)
+		rg.PATCH("/polls/:id", handler.UpdatePoll)
 
 		rg.POST("/polls/:id/options", handler.CreateOption)
 		rg.DELETE("polls/:id/options/:optionID", handler.DeleteOption)

@@ -894,6 +894,7 @@ type User struct {
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Email         string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
 	IsBlocked     bool                   `protobuf:"varint,3,opt,name=is_blocked,json=isBlocked,proto3" json:"is_blocked,omitempty"`
+	IsAdmin       bool                   `protobuf:"varint,4,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -945,6 +946,13 @@ func (x *User) GetEmail() string {
 func (x *User) GetIsBlocked() bool {
 	if x != nil {
 		return x.IsBlocked
+	}
+	return false
+}
+
+func (x *User) GetIsAdmin() bool {
+	if x != nil {
+		return x.IsAdmin
 	}
 	return false
 }
@@ -1037,6 +1045,126 @@ func (x *IsBlockedResponse) GetIsBlocked() bool {
 	return false
 }
 
+type SetAdminStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Admin         bool                   `protobuf:"varint,2,opt,name=admin,proto3" json:"admin,omitempty"` // true = админ, false = не админ
+	AccessToken   string                 `protobuf:"bytes,3,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	AppId         int32                  `protobuf:"varint,4,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetAdminStatusRequest) Reset() {
+	*x = SetAdminStatusRequest{}
+	mi := &file_auth_auth_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetAdminStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAdminStatusRequest) ProtoMessage() {}
+
+func (x *SetAdminStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_auth_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAdminStatusRequest.ProtoReflect.Descriptor instead.
+func (*SetAdminStatusRequest) Descriptor() ([]byte, []int) {
+	return file_auth_auth_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SetAdminStatusRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *SetAdminStatusRequest) GetAdmin() bool {
+	if x != nil {
+		return x.Admin
+	}
+	return false
+}
+
+func (x *SetAdminStatusRequest) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+func (x *SetAdminStatusRequest) GetAppId() int32 {
+	if x != nil {
+		return x.AppId
+	}
+	return 0
+}
+
+type SetAdminStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetAdminStatusResponse) Reset() {
+	*x = SetAdminStatusResponse{}
+	mi := &file_auth_auth_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetAdminStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetAdminStatusResponse) ProtoMessage() {}
+
+func (x *SetAdminStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_auth_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetAdminStatusResponse.ProtoReflect.Descriptor instead.
+func (*SetAdminStatusResponse) Descriptor() ([]byte, []int) {
+	return file_auth_auth_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *SetAdminStatusResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SetAdminStatusResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_auth_auth_proto protoreflect.FileDescriptor
 
 const file_auth_auth_proto_rawDesc = "" +
@@ -1090,24 +1218,34 @@ const file_auth_auth_proto_rawDesc = "" +
 	"\x06app_id\x18\x02 \x01(\x05R\x05appId\"4\n" +
 	"\x10GetUsersResponse\x12 \n" +
 	"\x05users\x18\x01 \x03(\v2\n" +
-	".auth.UserR\x05users\"K\n" +
+	".auth.UserR\x05users\"f\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +
 	"\n" +
-	"is_blocked\x18\x03 \x01(\bR\tisBlocked\"+\n" +
+	"is_blocked\x18\x03 \x01(\bR\tisBlocked\x12\x19\n" +
+	"\bis_admin\x18\x04 \x01(\bR\aisAdmin\"+\n" +
 	"\x10IsBlockedRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x03R\x06userId\"2\n" +
 	"\x11IsBlockedResponse\x12\x1d\n" +
 	"\n" +
-	"is_blocked\x18\x01 \x01(\bR\tisBlocked2\xa6\x06\n" +
+	"is_blocked\x18\x01 \x01(\bR\tisBlocked\"\x80\x01\n" +
+	"\x15SetAdminStatusRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12\x14\n" +
+	"\x05admin\x18\x02 \x01(\bR\x05admin\x12!\n" +
+	"\faccess_token\x18\x03 \x01(\tR\vaccessToken\x12\x15\n" +
+	"\x06app_id\x18\x04 \x01(\x05R\x05appId\"L\n" +
+	"\x16SetAdminStatusResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\x96\a\n" +
 	"\x04Auth\x12T\n" +
 	"\bRegister\x12\x15.auth.RegisterRequest\x1a\x16.auth.RegisterResponse\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/auth/register\x12H\n" +
 	"\x05Login\x12\x12.auth.LoginRequest\x1a\x13.auth.LoginResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/login\x12U\n" +
 	"\aIsAdmin\x12\x14.auth.IsAdminRequest\x1a\x15.auth.IsAdminResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/auth/admin/{user_id}\x12`\n" +
 	"\rRefreshTokens\x12\x19.auth.RefreshTokenRequest\x1a\x1a.auth.RefreshTokenResponse\"\x18\x82\xd3\xe4\x93\x02\x12:\x01*\"\r/auth/refresh\x12L\n" +
 	"\x06Logout\x12\x13.auth.LogoutRequest\x1a\x14.auth.LogoutResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/auth/logout\x12v\n" +
-	"\x12SetUserBlockStatus\x12\x1f.auth.SetUserBlockStatusRequest\x1a .auth.SetUserBlockStatusResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/auth/block-status\x12Q\n" +
+	"\x12SetUserBlockStatus\x12\x1f.auth.SetUserBlockStatusRequest\x1a .auth.SetUserBlockStatusResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/auth/block-status\x12n\n" +
+	"\x12SetUserAdminStatus\x12\x1b.auth.SetAdminStatusRequest\x1a\x1c.auth.SetAdminStatusResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/auth/admin-status\x12Q\n" +
 	"\bGetUsers\x12\x15.auth.GetUsersRequest\x1a\x16.auth.GetUsersResponse\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/auth/users\x12b\n" +
 	"\tIsBlocked\x12\x16.auth.IsBlockedRequest\x1a\x17.auth.IsBlockedResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/auth/block-status/{user_id}\x12H\n" +
 	"\rValidateToken\x12\x1a.auth.ValidateTokenRequest\x1a\x1b.auth.ValidateTokenResponseB\x15Z\x1314kear.sso.v1;ssov1b\x06proto3"
@@ -1124,7 +1262,7 @@ func file_auth_auth_proto_rawDescGZIP() []byte {
 	return file_auth_auth_proto_rawDescData
 }
 
-var file_auth_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_auth_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_auth_auth_proto_goTypes = []any{
 	(*RegisterRequest)(nil),            // 0: auth.RegisterRequest
 	(*RegisterResponse)(nil),           // 1: auth.RegisterResponse
@@ -1145,6 +1283,8 @@ var file_auth_auth_proto_goTypes = []any{
 	(*User)(nil),                       // 16: auth.User
 	(*IsBlockedRequest)(nil),           // 17: auth.IsBlockedRequest
 	(*IsBlockedResponse)(nil),          // 18: auth.IsBlockedResponse
+	(*SetAdminStatusRequest)(nil),      // 19: auth.SetAdminStatusRequest
+	(*SetAdminStatusResponse)(nil),     // 20: auth.SetAdminStatusResponse
 }
 var file_auth_auth_proto_depIdxs = []int32{
 	16, // 0: auth.GetUsersResponse.users:type_name -> auth.User
@@ -1154,20 +1294,22 @@ var file_auth_auth_proto_depIdxs = []int32{
 	6,  // 4: auth.Auth.RefreshTokens:input_type -> auth.RefreshTokenRequest
 	8,  // 5: auth.Auth.Logout:input_type -> auth.LogoutRequest
 	12, // 6: auth.Auth.SetUserBlockStatus:input_type -> auth.SetUserBlockStatusRequest
-	14, // 7: auth.Auth.GetUsers:input_type -> auth.GetUsersRequest
-	17, // 8: auth.Auth.IsBlocked:input_type -> auth.IsBlockedRequest
-	10, // 9: auth.Auth.ValidateToken:input_type -> auth.ValidateTokenRequest
-	1,  // 10: auth.Auth.Register:output_type -> auth.RegisterResponse
-	3,  // 11: auth.Auth.Login:output_type -> auth.LoginResponse
-	5,  // 12: auth.Auth.IsAdmin:output_type -> auth.IsAdminResponse
-	7,  // 13: auth.Auth.RefreshTokens:output_type -> auth.RefreshTokenResponse
-	9,  // 14: auth.Auth.Logout:output_type -> auth.LogoutResponse
-	13, // 15: auth.Auth.SetUserBlockStatus:output_type -> auth.SetUserBlockStatusResponse
-	15, // 16: auth.Auth.GetUsers:output_type -> auth.GetUsersResponse
-	18, // 17: auth.Auth.IsBlocked:output_type -> auth.IsBlockedResponse
-	11, // 18: auth.Auth.ValidateToken:output_type -> auth.ValidateTokenResponse
-	10, // [10:19] is the sub-list for method output_type
-	1,  // [1:10] is the sub-list for method input_type
+	19, // 7: auth.Auth.SetUserAdminStatus:input_type -> auth.SetAdminStatusRequest
+	14, // 8: auth.Auth.GetUsers:input_type -> auth.GetUsersRequest
+	17, // 9: auth.Auth.IsBlocked:input_type -> auth.IsBlockedRequest
+	10, // 10: auth.Auth.ValidateToken:input_type -> auth.ValidateTokenRequest
+	1,  // 11: auth.Auth.Register:output_type -> auth.RegisterResponse
+	3,  // 12: auth.Auth.Login:output_type -> auth.LoginResponse
+	5,  // 13: auth.Auth.IsAdmin:output_type -> auth.IsAdminResponse
+	7,  // 14: auth.Auth.RefreshTokens:output_type -> auth.RefreshTokenResponse
+	9,  // 15: auth.Auth.Logout:output_type -> auth.LogoutResponse
+	13, // 16: auth.Auth.SetUserBlockStatus:output_type -> auth.SetUserBlockStatusResponse
+	20, // 17: auth.Auth.SetUserAdminStatus:output_type -> auth.SetAdminStatusResponse
+	15, // 18: auth.Auth.GetUsers:output_type -> auth.GetUsersResponse
+	18, // 19: auth.Auth.IsBlocked:output_type -> auth.IsBlockedResponse
+	11, // 20: auth.Auth.ValidateToken:output_type -> auth.ValidateTokenResponse
+	11, // [11:21] is the sub-list for method output_type
+	1,  // [1:11] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name
@@ -1184,7 +1326,7 @@ func file_auth_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_auth_proto_rawDesc), len(file_auth_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

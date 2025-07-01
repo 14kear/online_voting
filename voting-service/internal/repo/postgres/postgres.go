@@ -193,13 +193,13 @@ func (s *Storage) DeleteOption(ctx context.Context, id int64, pollID int64) erro
 	return nil
 }
 
-func (s *Storage) SaveResult(ctx context.Context, pollID, optionID, userID int64) (int64, error) {
+func (s *Storage) SaveResult(ctx context.Context, pollID, optionID, userID int64, email string) (int64, error) {
 	const op = "storage.postgres.SaveResult"
 
-	query := `INSERT INTO results (poll_id, option_id, user_id) VALUES ($1, $2, $3) RETURNING id`
+	query := `INSERT INTO results (poll_id, option_id, user_id, user_email) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var id int64
-	err := s.db.QueryRowContext(ctx, query, pollID, optionID, userID).Scan(&id)
+	err := s.db.QueryRowContext(ctx, query, pollID, optionID, userID, email).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -254,7 +254,7 @@ func (s *Storage) GetResultsByPollID(ctx context.Context, pollID int64) ([]entit
 func (s *Storage) GetResults(ctx context.Context) ([]entity.Result, error) {
 	const op = "storage.postgres.GetResults"
 
-	query := `SELECT id, poll_id, option_id, user_id, voted_at FROM results ORDER BY voted_at DESC`
+	query := `SELECT id, poll_id, option_id, user_id, user_email, voted_at FROM results ORDER BY voted_at DESC`
 
 	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
@@ -265,7 +265,7 @@ func (s *Storage) GetResults(ctx context.Context) ([]entity.Result, error) {
 	var results []entity.Result
 	for rows.Next() {
 		var result entity.Result
-		if err := rows.Scan(&result.ID, &result.PollID, &result.OptionID, &result.UserID, &result.VotedAt); err != nil {
+		if err := rows.Scan(&result.ID, &result.PollID, &result.OptionID, &result.UserID, &result.UserEmail, &result.VotedAt); err != nil {
 			return nil, fmt.Errorf("%s: scan: %w", op, err)
 		}
 		results = append(results, result)

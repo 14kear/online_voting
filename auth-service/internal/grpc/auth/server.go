@@ -34,6 +34,7 @@ type Auth interface {
 	IsBlocked(ctx context.Context, userID int64) (bool, error)
 	SetUserBlockStatus(ctx context.Context, userID int64, block bool, accessToken string, appID int) error
 	GetUsers(ctx context.Context, accessToken string, appID int) ([]models.User, error)
+	SetUserAdminStatus(ctx context.Context, userID int64, admin bool, accessToken string, appID int) error
 }
 
 type serverAPI struct {
@@ -58,6 +59,9 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
 			return nil, status.Error(codes.InvalidArgument, "invalid email or password")
+		}
+		if errors.Is(err, auth.ErrBlockedUser) {
+			return nil, status.Error(codes.PermissionDenied, "user is blocked")
 		}
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
@@ -155,13 +159,28 @@ func (s *serverAPI) SetUserBlockStatus(ctx context.Context, req *ssov1.SetUserBl
 	}, nil
 }
 
+func (s *serverAPI) SetUserAdminStatus(ctx context.Context, req *ssov1.SetAdminStatusRequest) (*ssov1.SetAdminStatusResponse, error) {
+	err := s.auth.SetUserAdminStatus(ctx, req.GetUserId(), req.GetAdmin(), req.GetAccessToken(), int(req.GetAppId()))
+	if err != nil {
+		return &ssov1.SetAdminStatusResponse{
+			Success: false,
+			Message: "failed to switch user role",
+		}, err
+	}
+
+	return &ssov1.SetAdminStatusResponse{
+		Success: true,
+		Message: "status updated",
+	}, nil
+}
+
 func (s *serverAPI) GetUsers(ctx context.Context, req *ssov1.GetUsersRequest) (*ssov1.GetUsersResponse, error) {
 	users, err := s.auth.GetUsers(ctx, req.GetAccessToken(), int(req.GetAppId()))
 	if err != nil {
 		if errors.Is(err, auth.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
-		return nil, status.Error(codes.Internal, "internal server error")
+		return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 	}
 
 	var protoUsers []*ssov1.User
@@ -170,6 +189,7 @@ func (s *serverAPI) GetUsers(ctx context.Context, req *ssov1.GetUsersRequest) (*
 			Id:        u.ID,
 			Email:     u.Email,
 			IsBlocked: u.IsBlocked,
+			IsAdmin:   u.IsAdmin,
 		})
 	}
 

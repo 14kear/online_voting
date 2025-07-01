@@ -6,7 +6,7 @@ type PollStatus string
 
 const (
 	PollStatusActive PollStatus = "active"
-	PollStatusClosed PollStatus = "closed"
+	PollStatusClosed PollStatus = "not-active"
 )
 
 type Poll struct {

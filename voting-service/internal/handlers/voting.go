@@ -25,7 +25,7 @@ type CreateOptionRequest struct {
 type UpdatePollRequest struct {
 	Title       string `json:"title" binding:"required"`
 	Description string `json:"description" binding:"required"`
-	Status      string `json:"status"      binding:"required,oneof=active closed"`
+	Status      string `json:"status"      binding:"required,oneof=active not-active"`
 }
 
 type UpdateOptionRequest struct {
@@ -332,7 +332,19 @@ func (v *VotingHandler) SaveResult(c *gin.Context) {
 		return
 	}
 
-	resultID, err := v.votingService.SaveResult(c.Request.Context(), req.PollID, req.OptionID, userID)
+	userEmailValue, exists := c.Get("userEmail")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	userEmail, ok := userEmailValue.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user email in context"})
+		return
+	}
+
+	resultID, err := v.votingService.SaveResult(c.Request.Context(), req.PollID, req.OptionID, userID, userEmail)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

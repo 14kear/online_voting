@@ -27,9 +27,9 @@ const (
 
 func main() {
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"}, // Разрешаем доступ с фронта на localhost:3000
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:4200"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization", "X-Refresh-Token"},
 		AllowCredentials: true,
 	})
 

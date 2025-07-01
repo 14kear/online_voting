@@ -208,6 +208,16 @@ func (s *Storage) SetUserBlockStatus(ctx context.Context, userID int64, block bo
 	return nil
 }
 
+func (s *Storage) SetUserAdminStatus(ctx context.Context, userID int64, admin bool) error {
+	const op = "storage.postgres.SetUserAdminStatus"
+
+	_, err := s.db.ExecContext(ctx, `UPDATE users SET is_admin = $1 WHERE id = $2`, admin, userID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}
+
 func (s *Storage) IsBlocked(ctx context.Context, userID int64) (bool, error) {
 	query := `SELECT is_blocked FROM users WHERE id = $1`
 	var isBlocked bool
@@ -224,7 +234,7 @@ func (s *Storage) IsBlocked(ctx context.Context, userID int64) (bool, error) {
 func (s *Storage) GetUsers(ctx context.Context) ([]models.User, error) {
 	const op = "storage.postgres.GetUsers"
 
-	rows, err := s.db.QueryContext(ctx, "SELECT id, email, is_blocked FROM users")
+	rows, err := s.db.QueryContext(ctx, "SELECT id, email, is_blocked, is_admin FROM users")
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -233,7 +243,7 @@ func (s *Storage) GetUsers(ctx context.Context) ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		var user models.User
-		err := rows.Scan(&user.ID, &user.Email, &user.IsBlocked)
+		err := rows.Scan(&user.ID, &user.Email, &user.IsBlocked, &user.IsAdmin)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", op, err)
 		}

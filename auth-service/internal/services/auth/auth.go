@@ -48,6 +48,7 @@ type UserProvider interface {
 	SetUserBlockStatus(ctx context.Context, userID int64, block bool) error
 	IsBlocked(ctx context.Context, userID int64) (bool, error)
 	GetUsers(ctx context.Context) ([]models.User, error)
+	SetUserAdminStatus(ctx context.Context, userID int64, admin bool) error
 }
 
 type AppProvider interface {
@@ -58,6 +59,7 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserExists         = errors.New("user already exists")
 	ErrUserNotFound       = errors.New("user not found")
+	ErrBlockedUser        = errors.New("user is blocked")
 )
 
 // NewAuth return a new instance of the Auth service
@@ -104,7 +106,7 @@ func (auth *Auth) Login(ctx context.Context, email, password string, appID int) 
 	}
 
 	if user.IsBlocked {
-		return "", "", 0, fmt.Errorf("user is blocked")
+		return "", "", 0, fmt.Errorf("%s: %w", op, ErrBlockedUser)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
@@ -402,6 +404,36 @@ func (auth *Auth) SetUserBlockStatus(ctx context.Context, userID int64, block bo
 	}
 
 	log.Info("blocked user")
+
+	return nil
+}
+
+func (auth *Auth) SetUserAdminStatus(ctx context.Context, userID int64, admin bool, accessToken string, appID int) error {
+	const op = "auth.SetUserAdminStatus"
+
+	log := auth.log.With(slog.String("op", op))
+	log.Info("switching user role")
+
+	validatedID, _, err := auth.ValidateToken(ctx, accessToken, appID)
+	if err != nil {
+		return fmt.Errorf("%s: token invalid: %w", op, err)
+	}
+
+	isAdmin, err := auth.IsAdmin(ctx, validatedID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if !isAdmin {
+		return fmt.Errorf("user %d is not an admin", validatedID)
+	}
+
+	err = auth.userProvider.SetUserAdminStatus(ctx, userID, admin)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("user role switched")
 
 	return nil
 }

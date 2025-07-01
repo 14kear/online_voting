@@ -39,7 +39,7 @@ type PollStorage interface {
 }
 
 type ResultStorage interface {
-	SaveResult(ctx context.Context, pollID, optionID, userID int64) (int64, error)
+	SaveResult(ctx context.Context, pollID, optionID, userID int64, email string) (int64, error)
 	GetResultByID(ctx context.Context, id int64) (entity.Result, error)
 	GetResultsByPollID(ctx context.Context, pollID int64) ([]entity.Result, error)
 	GetResults(ctx context.Context) ([]entity.Result, error)
@@ -303,10 +303,10 @@ func (v *OnlineVoting) DeleteOption(ctx context.Context, id, pollID int64, userI
 	return nil
 }
 
-func (v *OnlineVoting) SaveResult(ctx context.Context, pollID, optionID, userID int64) (int64, error) {
+func (v *OnlineVoting) SaveResult(ctx context.Context, pollID, optionID, userID int64, email string) (int64, error) {
 	const op = "OnlineVoting.SaveResult"
 
-	resultID, err := v.resultStorage.SaveResult(ctx, pollID, optionID, userID)
+	resultID, err := v.resultStorage.SaveResult(ctx, pollID, optionID, userID, email)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
